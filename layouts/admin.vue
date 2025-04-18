@@ -1,13 +1,9 @@
 <template>
-  <div class="min-h-screen flex">
-    <!-- <AdminSidebar /> -->
-    <div>AdminSidebar</div>
-    <main class="flex-1 p-6 bg-gray-50">
-      <slot />
-    </main>
-  </div>
+  <LayoutSidebar>
+    <slot />
+  </LayoutSidebar>
 </template>
 
 <script setup>
-// import AdminSidebar from "~/components/admin/AdminSidebar.vue";
+import LayoutSidebar from "~/components/layouts/LayoutSidebar.vue";
 </script>

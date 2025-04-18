@@ -1,16 +1,14 @@
 <template>
   <div>
-    <!-- <Navbar /> -->
-    <div>nav</div>
+    <Header />
     <main class="container mx-auto py-8">
       <slot />
     </main>
-    <!-- <Footer /> -->
-    <div>footer</div>
+    <Footer />
   </div>
 </template>
 
 <script setup>
-// import Navbar from "~/components/Navbar.vue";
-// import Footer from "~/components/Footer.vue";
+import Header from "~/components/Header.vue";
+import Footer from "~/components/Footer.vue";
 </script>

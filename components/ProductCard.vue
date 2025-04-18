@@ -13,11 +13,14 @@
       <p class="text-primary text-base font-bold">
         {{ formatPrice(product.price) }}
       </p>
+      <a-button type="primary">Mua ngay</a-button>
     </NuxtLink>
   </div>
 </template>
 
 <script setup>
+// import { Button, Card } from 'ant-design-vue'
+
 defineProps({
   product: {
     type: Object,

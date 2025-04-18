@@ -1,6 +1,6 @@
 # 📱 Bán ROM, Tài Khoản & Tool cho MMO
 
-Chào mừng bạn đến với dự án **Bán ROM cho box điện thoại, tài khoản và công cụ dành cho MMO**.
+Chào mừng bạn đến với dự án **Bán ROM cho box điện thoại, tài khoản và công cụ **.
 
 ---
 
@@ -16,27 +16,4 @@ Chào mừng bạn đến với dự án **Bán ROM cho box điện thoại, tà
 - 📈 **Bảng điều khiển admin**: quản lý sản phẩm, đơn hàng, người dùng và phân quyền.
 
 ---
-
-## 🖥️ Công nghệ sử dụng
-
-### 🧑‍💻 Frontend:
-
-- [Nuxt 3](https://nuxt.com/)
-- TailwindCSS
-- VueUse, Pinia, Axios
-
-### ⚙️ Backend:
-
-- Express.js (Node.js)
-- MongoDB hoặc MySQL
-- JWT Auth
-
-### 💳 Thanh toán:
-
-- VNPay, Momo API, Bank QR
-- Lưu log giao dịch và trạng thái thanh toán
-
----
-
-## 🚀 Cài đặt và khởi chạy
 

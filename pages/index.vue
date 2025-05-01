@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-3xl font-bold mb-4">Sản phẩm nổi bật</h1>
+    <h1 class="text-3xl font-bold mb-4">Sản phẩm nổi bật 1</h1>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <product-card v-for="product in products" :key="product.id" :product="product" />
     </div>

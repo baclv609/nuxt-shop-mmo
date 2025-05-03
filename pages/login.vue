@@ -75,13 +75,16 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { message } from "ant-design-vue";
 import { GoogleOutlined } from "@ant-design/icons-vue";
+import { useAuth } from "@/composables/useAuth";
+import { useAuthStore } from '~/stores/auth';
 
 definePageMeta({ layout: "auth" });
 
 const router = useRouter();
 const formRef = ref();
 const loading = ref(false);
-
+const { login } = useAuth();
+const auth = useAuthStore();
 const formState = reactive({
   email: "",
   password: "",
@@ -98,32 +101,27 @@ const rules = {
   ],
 };
 
-// Gọi API hoặc mô phỏng login
-const useLogin = async (email, password) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (email === "admin@gmail.com" && password === "123456") {
-        resolve({ token: "fake-token" });
-      } else {
-        reject(new Error("Sai email hoặc mật khẩu"));
-      }
-    }, 1000);
-  });
-};
 
 const handleSubmit = async () => {
+  console.log("Form data:", formState.email, formState.password); // Kiểm tra dữ liệu form
+
   loading.value = true;
   try {
-    const res = await useLogin(formState.email, formState.password);
-    localStorage.setItem("token", res.token);
+    const res = await login(formState.email, formState.password);
+    console.log("API response:", res); // Kiểm tra dữ liệu trả về từ API
+    // localStorage.setItem("token", res.token);
+    auth.setAuth(res.token, res.user);
+
     message.success("Đăng nhập thành công!");
-    router.push("/");
+    // router.push("/"); // Nếu cần chuyển trang
   } catch (err) {
-    message.error(err.message);
+    console.error("Error:", err); // Log lỗi nếu có
+    message.error(err?.response?.data?.message || "Đăng nhập thất bại");
   } finally {
     loading.value = false;
   }
 };
+
 
 const signInWithGoogle = () => {
   message.info("Tính năng Google Sign In chưa được tích hợp.");

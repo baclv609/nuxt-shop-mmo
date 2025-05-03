@@ -1,21 +1,38 @@
-import { defineStore } from "pinia";
+// ~/stores/auth.ts
+import { defineStore } from 'pinia'
 
-export const useAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null as null | { name: string },
-    token: null as null | string,
+    token: null as string | null,
+    user: null as null | { name: string; email: string },
   }),
+
   getters: {
-    loggedIn: (state : any) => !!state.user,
+    loggedIn: (state) => !!state.token,
   },
+
   actions: {
-    login(name: string) {
-      this.user = { name };
-      this.token = "fake-token";
+    setAuth(token: string, user: { name: string; email: string }) {
+      this.token = token;
+      this.user = user;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
     },
+
+    loadAuthFromStorage() {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      if (token && user) {
+        this.token = token;
+        this.user = JSON.parse(user);
+      }
+    },
+
     logout() {
-      this.user = null;
       this.token = null;
+      this.user = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
   },
 });

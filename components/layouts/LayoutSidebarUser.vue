@@ -1,24 +1,13 @@
 <template>
   <a-layout class="min-h-screen">
     <!-- Drawer sidebar cho mobile -->
-    <a-drawer
-      placement="left"
-      :visible="drawerVisible"
-      :closable="false"
-      @close="drawerVisible = false"
-      :body-style="{ padding: 0 }"
-      width="200"
-    >
+    <a-drawer placement="left" :visible="drawerVisible" :closable="false" @close="drawerVisible = false"
+      :body-style="{ padding: 0 }" width="200">
       <SidebarContent @close="drawerVisible = false" />
     </a-drawer>
 
     <!-- Sidebar desktop -->
-    <a-layout-sider
-      v-if="!isMobile"
-      v-model:collapsed="collapsed"
-      :trigger="null"
-      collapsible
-    >
+    <a-layout-sider v-if="!isMobile" v-model:collapsed="collapsed" :trigger="null" collapsible>
       <SidebarContent />
     </a-layout-sider>
 
@@ -28,41 +17,45 @@
         <!-- Menu toggle -->
         <div>
           <!-- Desktop -->
-          <menu-unfold-outlined
-            v-if="!isMobile && collapsed"
-            class="trigger"
-            @click="collapsed = !collapsed"
-          />
-          <menu-fold-outlined
-            v-if="!isMobile && !collapsed"
-            class="trigger"
-            @click="collapsed = !collapsed"
-          />
+          <menu-unfold-outlined v-if="!isMobile && collapsed" class="trigger" @click="collapsed = !collapsed" />
+          <menu-fold-outlined v-if="!isMobile && !collapsed" class="trigger" @click="collapsed = !collapsed" />
 
           <!-- Mobile: hamburger -->
-          <menu-unfold-outlined
-            v-if="isMobile"
-            class="trigger"
-            @click="drawerVisible = true"
-          />
+          <menu-unfold-outlined v-if="isMobile" class="trigger" @click="drawerVisible = true" />
         </div>
 
-        <!-- Avatar -->
-        <div class="p-6">
+        <!-- Avatar + Tiền -->
+        <div class="flex items-center gap-4 pr-6">
+          <!-- Nút hiển thị số tiền -->
+          <a-button type="default" shape="round"
+            class="flex items-center gap-2 !text-green-600 !border-green-300 hover:!border-green-500 hover:!text-green-700 shadow-sm">
+            <template #icon>
+              <WalletOutlined />
+            </template>
+            1.500.000 ₫
+          </a-button>
+
+          <!-- Avatar dropdown -->
           <a-dropdown trigger="click">
             <a class="cursor-pointer" @click.prevent>
-              <a-avatar :size="32"><UserOutlined /></a-avatar>
+              <a-avatar :size="32">
+                <UserOutlined />
+              </a-avatar>
             </a>
             <template #overlay>
               <a-menu>
-                <a-menu-item key="profile"><UserOutlined /> Thông tin</a-menu-item>
-                <a-menu-item key="logout" @click="handleLogout"
-                  ><UploadOutlined /> Đăng xuất</a-menu-item
-                >
+                <a-menu-item key="profile">
+                  <UserOutlined /> Thông tin
+                </a-menu-item>
+                <a-menu-item key="logout" @click="handleLogout">
+                  <UploadOutlined /> Đăng xuất
+                </a-menu-item>
               </a-menu>
             </template>
           </a-dropdown>
         </div>
+
+
       </a-layout-header>
 
       <a-layout-content class="p-6 bg-gray-50 min-h-[calc(100vh-64px)]">
@@ -83,6 +76,7 @@ import {
   UploadOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
+  WalletOutlined,
 } from "@ant-design/icons-vue";
 
 const collapsed = ref(false);
@@ -114,11 +108,12 @@ const handleLogout = () => {
   transition: color 0.3s;
   padding: 0 16px;
 }
+
 .trigger:hover {
   color: #1890ff;
 }
-:deep(.ant-layout-header) {
-padding: 0 !important;
-}
 
+:deep(.ant-layout-header) {
+  padding: 0 !important;
+}
 </style>

@@ -88,6 +88,12 @@ const menuItems = ref([
     to: "/user",
   },
   {
+    key: "category",
+    icon: UserOutlined,
+    label: "Danh mục sản phẩm",
+    to: "/category", // Danh mục sản phẩm
+  },
+  {
     key: "rom",
     icon: UserOutlined,
     label: "Quản lý ROM",

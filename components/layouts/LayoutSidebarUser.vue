@@ -15,13 +15,24 @@
     <a-layout style="flex-direction: column">
       <a-layout-header class="!bg-white flex items-center justify-between h-16 shadow">
         <!-- Menu toggle -->
-        <div>
+        <div class="flex items-center"> 
           <!-- Desktop -->
           <menu-unfold-outlined v-if="!isMobile && collapsed" class="trigger" @click="collapsed = !collapsed" />
           <menu-fold-outlined v-if="!isMobile && !collapsed" class="trigger" @click="collapsed = !collapsed" />
 
           <!-- Mobile: hamburger -->
           <menu-unfold-outlined v-if="isMobile" class="trigger" @click="drawerVisible = true" />
+
+          <a-input-search
+            v-model:value="inputSearchValue"
+            placeholder="Nhập từ khóa tìm kiếm"
+            allow-clear
+            enter-button
+            class="!ml-4 min-w-[180px]"
+            @input="onSearchInput"
+            @search="onSearch"
+          />
+
         </div>
 
         <!-- Avatar + Tiền -->
@@ -65,9 +76,11 @@
   </a-layout>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import SidebarContent from "../user/sidebar/SidebarContent.vue";
+import debounce from "lodash.debounce"
+
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -83,6 +96,25 @@ const collapsed = ref(false);
 const drawerVisible = ref(false);
 const isMobile = ref(false);
 
+const inputSearchValue = ref('');
+
+// debounce function: gọi sau 500ms
+const debouncedSearch = debounce((val) => {
+  console.log("Đã tìm kiếm:", val);
+  // TODO: gọi API hoặc lọc dữ liệu ở đây
+}, 500);
+
+// Gọi khi input thay đổi
+const onSearchInput = (e) => {
+  const target = e.target;
+  inputSearchValue.value = target.value;
+  debouncedSearch(target.value);
+};
+
+const onSearch = (val) => {
+  console.log("Ấn Enter/Search:", val);
+  // Optional: xử lý thêm khi user nhấn Enter
+};
 const updateIsMobile = () => {
   isMobile.value = window.innerWidth < 768;
 };
@@ -116,4 +148,17 @@ const handleLogout = () => {
 :deep(.ant-layout-header) {
   padding: 0 !important;
 }
+
+:deep(.ant-input-search) {
+  margin-left: 16px;
+  max-width: 300px;
+}
+
+@media (max-width: 768px) {
+  :deep(.ant-input-search) {
+    width: 100%;
+    margin: 8px 0;
+  }
+}
+
 </style>

@@ -2,10 +2,13 @@
 import { reactive } from 'vue'
 import { message } from 'ant-design-vue'
 import { useAuth } from "@/composables/useAuth";
+import { useRouter } from 'vue-router'
+
 definePageMeta({ layout: "auth" });
 
 const config = useRuntimeConfig();
 const { register } = useAuth();
+const router = useRouter();
 const formState = reactive({
   username: '',
   email: '',
@@ -46,12 +49,12 @@ onMounted(() => {
 
 const handleSubmit = async () => {
   try {
-
     const res = await register(formState.username, formState.email, formState.password);
-    console.log('register', res)
+    // Redirect to home page after successful registration
+    router.push("/");
   } catch (err) {
-    message.error('Có lỗi xảy ra, vui lòng thử lại sau')
-    console.error(err)
+    console.error(err);
+    message.error(err.message || "Có lỗi xảy ra, vui lòng thử lại sau");
   }
 }
 

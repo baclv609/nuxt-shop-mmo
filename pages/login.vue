@@ -103,20 +103,18 @@ const rules = {
 
 
 const handleSubmit = async () => {
-  console.log("Form data:", formState.email, formState.password); // Kiểm tra dữ liệu form
-
   loading.value = true;
   try {
     const res = await login(formState.email, formState.password);
-    console.log("API response:", res); // Kiểm tra dữ liệu trả về từ API
-    // localStorage.setItem("token", res.token);
-    auth.setAuth(res.token, res.user);
-
-    message.success("Đăng nhập thành công!");
-    // router.push("/"); // Nếu cần chuyển trang
+    // Redirect based on user role
+    if (auth.isAdmin) {
+      router.push("/admin");
+    } else {
+      router.push("/");
+    }
   } catch (err) {
-    console.error("Error:", err); // Log lỗi nếu có
-    message.error(err?.response?.data?.message || "Đăng nhập thất bại");
+    console.error("Error:", err);
+    message.error(err.message || "Đăng nhập thất bại");
   } finally {
     loading.value = false;
   }

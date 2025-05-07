@@ -4,7 +4,7 @@
       <NuxtLink to="/" class="text-xl font-bold text-blue-600"> ShopOnline </NuxtLink>
       <nav class="flex gap-6">
         <NuxtLink to="/" class="hover:text-blue-600 font-medium">Trang chủ</NuxtLink>
-        <NuxtLink to="/products" class="hover:text-blue-600 font-medium"
+        <NuxtLink to="/san-pham" class="hover:text-blue-600 font-medium"
           >Sản phẩm</NuxtLink
         >
         <NuxtLink to="/cart" class="hover:text-blue-600 font-medium">Giỏ hàng</NuxtLink>

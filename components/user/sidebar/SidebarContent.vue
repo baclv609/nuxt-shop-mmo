@@ -14,7 +14,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from "vue";
 import {
   ShoppingCartOutlined,
@@ -26,10 +26,10 @@ const selectedKeys = ref(["products"]);
 const emit = defineEmits(["close"]);
 
 const menuItems = [
-  { key: "products", label: "Sản phẩm", to: "/user/products", icon: AppstoreOutlined },
-  { key: "orders", label: "Đơn hàng", to: "/user/orders", icon: ShoppingCartOutlined },
-  { key: "cart", label: "Giỏ hàng", to: "/user/cart", icon: ShoppingCartOutlined },
-  { key: "settings", label: "Cài đặt", to: "/user/settings", icon: SettingOutlined },
+  { key: "products", label: "Sản phẩm", to: "/", icon: AppstoreOutlined },
+  { key: "orders", label: "Đơn hàng", to: "/don-hang", icon: ShoppingCartOutlined },
+  { key: "cart", label: "Nạp tiền", to: "/nap-tien", icon: ShoppingCartOutlined },
+  { key: "settings", label: "Profile", to: "/profile", icon: SettingOutlined },
 ];
 
 const onClickMenuItem = () => {

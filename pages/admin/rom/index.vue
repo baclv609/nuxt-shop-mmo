@@ -1,7 +1,10 @@
 <script setup>
 import TableRom from '~/components/admin/rom/TableRom.vue';
 
-definePageMeta({ layout: "admin" });
+definePageMeta({ 
+  layout: "admin",
+  middleware: ["admin"]
+});
 </script>
 
 <template>

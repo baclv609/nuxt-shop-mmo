@@ -22,6 +22,6 @@ export default defineNuxtRouteMiddleware((to) => {
 
   if (!auth.isAdmin) {
     console.log('Access denied: Not an admin user')
-    return navigateTo('/403')
+    return navigateTo('/404')
   }
 })

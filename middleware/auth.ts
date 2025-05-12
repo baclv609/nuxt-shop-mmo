@@ -13,6 +13,6 @@ export default defineNuxtRouteMiddleware((to) => {
   
   // Kiểm tra quyền truy cập trang user
   if (to.path.startsWith('/account') && !auth.isUser) {
-    return navigateTo('/403');
+    return navigateTo('/404');
   }
 });

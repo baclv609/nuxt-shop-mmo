@@ -37,13 +37,14 @@
 
         <!-- Avatar + Tiền -->
         <div class="flex items-center gap-4 pr-6">
-          <!-- Nút hiển thị số tiền -->
-          <a-button type="default" shape="round"
+          <!-- Nút hiển thị số tiền - chỉ hiển thị khi đã đăng nhập và có số dư -->
+          <a-button v-if="auth.loggedIn && auth.wallet" 
+            type="default" shape="round"
             class="flex items-center gap-2 !text-green-600 !border-green-300 hover:!border-green-500 hover:!text-green-700 shadow-sm">
             <template #icon>
               <WalletOutlined />
             </template>
-            1.500.000 ₫
+            {{ walletBalance }} ₫
           </a-button>
 
           <!-- Avatar dropdown -->
@@ -80,6 +81,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import SidebarContent from "../user/sidebar/SidebarContent.vue";
 import debounce from "lodash.debounce"
+import { useAuthStore } from '~/stores/auth'
 
 import {
   UserOutlined,
@@ -92,11 +94,46 @@ import {
   WalletOutlined,
 } from "@ant-design/icons-vue";
 
+const auth = useAuthStore();
 const collapsed = ref(false);
 const drawerVisible = ref(false);
 const isMobile = ref(false);
 
 const inputSearchValue = ref('');
+
+// Debug logs
+onMounted(() => {
+  console.log('LayoutSidebarUser mounted - Auth state:', {
+    isLoggedIn: auth.loggedIn,
+    user: auth.user,
+    wallet: auth.wallet,
+    balance: auth.wallet?.balance
+  });
+});
+
+// Computed property để lấy số dư ví
+const walletBalance = computed(() => {
+  return auth.walletBalance
+});
+
+// Hàm lấy số dư mới nhất
+const refreshWalletBalance = async () => {
+  try {
+    await auth.fetchLatestWalletBalance();
+  } catch (error) {
+    console.error('Error fetching wallet balance:', error);
+  }
+};
+
+// Lấy số dư mới khi component được mount
+onMounted(async () => {
+  updateIsMobile();
+  window.addEventListener("resize", updateIsMobile);
+  
+  if (auth.loggedIn) {
+    await refreshWalletBalance();
+  }
+});
 
 // debounce function: gọi sau 500ms
 const debouncedSearch = debounce((val) => {
@@ -119,17 +156,18 @@ const updateIsMobile = () => {
   isMobile.value = window.innerWidth < 768;
 };
 
-onMounted(() => {
-  updateIsMobile();
-  window.addEventListener("resize", updateIsMobile);
-});
-
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateIsMobile);
 });
 
 const handleLogout = () => {
-  console.log("Logout người dùng");
+  try {
+    auth.logout();
+    // Chuyển hướng về trang login sau khi đăng xuất
+    navigateTo('/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 </script>
 

@@ -11,6 +11,7 @@ export default defineNuxtPlugin(() => {
   console.log('Initial auth state:', {
     isLoggedIn: auth.loggedIn,
     isAdmin: auth.isAdmin,
-    user: auth.user
+    user: auth.user,
+    wallet: auth.userWallet
   })
 })

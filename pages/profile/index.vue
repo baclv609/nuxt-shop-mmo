@@ -520,6 +520,10 @@
 </template>
 
 <script setup>
+definePageMeta({
+  middleware: ['user']
+});
+
 import { ref, reactive, computed } from 'vue';
 import {
     UserOutlined,

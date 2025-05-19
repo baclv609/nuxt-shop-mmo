@@ -1,16 +1,16 @@
 <script setup>
 
-definePageMeta({ 
+definePageMeta({
   layout: "admin",
   middleware: ["admin"]
 });
+import CategoryManager from '~/components/admin/CategoryManager.vue';
+
+
 </script>
 
 <template>
   <div class="p-4">
-    <div class="flex justify-between">
-        <h1 class="text-2xl font-bold mb-4">Quản lý danh mục</h1>
-        <a-button type="primary">Tạo người dùng</a-button>
-    </div>
+    <CategoryManager />
   </div>
 </template>

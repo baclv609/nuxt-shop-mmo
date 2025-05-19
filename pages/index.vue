@@ -1,6 +1,7 @@
+<!-- pages/san-pham.vue -->
 <template>
   <div>
-    <h1 class="text-3xl font-bold mb-4">Sản phẩm nổi bật 1</h1>
+    <h1 class="text-3xl font-bold mb-4">Sản phẩm nổi bật</h1>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 scoll-list-card">
       <product-card v-for="product in products" :key="product.id" :product="product" />
     </div>
@@ -8,74 +9,42 @@
 </template>
 
 <script setup>
-definePageMeta({ layout: "default" });
+import { useSeoMeta, useRuntimeConfig } from 'nuxt/app'
+import { ref } from 'vue'
+import productCard from '~/components/ProductCard.vue'
 
-import { ref, onMounted } from "vue";
-import productCard from "~/components/ProductCard.vue";
+definePageMeta({
+  layout: 'default',
+})
 
-const products = ref([]);
+// Lấy config từ runtime
+const config = useRuntimeConfig()
 
-function generateSampleProducts(count = 10) {
-  const categories = [
-    { id: 1, name: "Nội thất" },
-    { id: 4, name: "Linh kiện RAM" }
-  ];
-  const ramNames = [
-    "RAM DDR4 8GB 2666MHz", "RAM DDR4 16GB 3200MHz", "RAM Laptop DDR4 8GB 3200MHz",
-    "RAM DDR5 16GB 5600MHz", "RAM Laptop DDR5 8GB 4800MHz"
-  ];
-  const furnitureNames = [
-    "Kệ sách Gỗ Sồi", "Bàn làm việc chân sắt", "Tủ giày 2 cánh MDF",
-    "Ghế ngồi bọc nệm cao cấp", "Giá treo quần áo đứng"
-  ];
+// Khởi tạo danh sách sản phẩm
+const products = ref([])
 
-  const slugify = str => str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
-
-  const products = [];
-
-  for (let i = 1; i <= count; i++) {
-    const isRam = i % 2 === 0;
-    const category = isRam ? categories[1] : categories[0];
-    const name = isRam
-      ? ramNames[Math.floor(Math.random() * ramNames.length)]
-      : furnitureNames[Math.floor(Math.random() * furnitureNames.length)];
-
-    const basePrice = Math.floor(Math.random() * 2000000) + 500000;
-    const discount = Math.floor(basePrice * (Math.random() * 0.2));
-    const createdAt = new Date(Date.now() - i * 3600 * 1000).toISOString().slice(0, 19).replace('T', ' ');
-
-    products.push({
-      id: 100 + i,
-      category_id: category.id,
-      name: name,
-      slug: slugify(name),
-      description: `${name} chất lượng cao, phù hợp nhu cầu sử dụng thực tế.`,
-      meta_title: name,
-      meta_description: `Thông tin chi tiết về ${name}, giá cả hợp lý.`,
-      original_price: basePrice,
-      discount_price: basePrice - discount,
-      hot: Math.random() < 0.3,
-      image_url: "https://source.unsplash.com/featured/?furniture,technology," + i,
-      alt_text: name,
-      main_link: `https://example.com/${slugify(name)}`,
-      backup_link: `https://backup.com/${slugify(name)}`,
-      views: Math.floor(Math.random() * 1000),
-      sold: Math.floor(Math.random() * 200),
-      created_at: createdAt,
-      updated_at: createdAt
-    });
-  }
-
-  return products;
+try {
+  // Gọi API từ server (SSR)
+  const fetchedProducts = await $fetch(`${config.public.apiBaseUrl}/products/user`)
+  products.value = fetchedProducts || []
+} catch (error) {
+  console.error('Không thể lấy danh sách sản phẩm từ server:', error)
 }
 
-// Gọi hàm tạo dữ liệu khi component được mount
-onMounted(() => {
-  products.value = generateSampleProducts(24);
-});
+// Tối ưu SEO
+useSeoMeta({
+  title: 'Danh sách sản phẩm nổi bật - Mua bán công cụ, thiết bị',
+  description: 'Khám phá các sản phẩm nổi bật như tai nghe, chuột, công cụ root Android giá tốt. Ưu đãi hấp dẫn mỗi ngày!',
+  ogTitle: 'Danh sách sản phẩm nổi bật',
+  ogDescription: 'Tổng hợp sản phẩm hot như tai nghe Sony, chuột Logitech, công cụ Android. Giá siêu tốt, ưu đãi flash sale!',
+  ogImage: products.value[0]?.image_url || '/default-thumbnail.jpg',
+  ogUrl: 'https://yourdomain.com/san-pham',
+  twitterCard: 'summary_large_image',
+})
 </script>
+
 <style>
-.scoll-list-card{
+.scoll-list-card {
   max-height: calc(100vh - 200px);
   overflow-y: auto;
 }

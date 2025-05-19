@@ -1,27 +1,18 @@
-import { useAuthStore } from '~/stores/auth'
-
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuthStore()
-  
-  // Load auth data from storage if not already loaded
-  if (!auth.user) {
-    auth.loadAuthFromStorage()
-  }
 
-  // Debug logs
-  console.log('Admin middleware check:', {
-    isLoggedIn: auth.loggedIn,
+  if (process.client && (!auth.user || !auth.token)) {
+    await auth.loadAuthFromStorage()
+  }
+console.log('auth.loggedIn', auth.loggedIn);
+console.log('auth.isAdmin', auth.isAdmin);
+
+  console.log('Middleware:', {
+    loggedIn: auth.loggedIn,
     isAdmin: auth.isAdmin,
-    user: auth.user,
-    path: to.path
+    user: auth.user
   })
 
-  if (!auth.loggedIn) {
-    return navigateTo('/login')
-  }
-
-  if (!auth.isAdmin) {
-    console.log('Access denied: Not an admin user')
-    return navigateTo('/404')
-  }
+  // if (!auth.loggedIn) return navigateTo('/login')
+  // if (!auth.isAdmin) return navigateTo('/404')
 })

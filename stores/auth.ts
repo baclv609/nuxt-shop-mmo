@@ -44,7 +44,7 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     setAuth(token: string, user: User, wallet: Wallet) {
-      console.log('Setting auth data:', { token, user, wallet });
+      // console.log('Setting auth data:', { token, user, wallet });
       this.token = token;
       this.user = user;
       this.wallet = wallet;
@@ -55,22 +55,39 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    loadAuthFromStorage() {
+    async loadAuthFromStorage() {
       if (process.client) {
         try {
+          // Lấy dữ liệu từ localStorage
           const token = localStorage.getItem('token');
           const userStr = localStorage.getItem('user');
           
+          console.log('Đang tải dữ liệu từ storage:', { token, userStr });
+          
           if (token && userStr) {
+            // Parse và set dữ liệu user
             const user = JSON.parse(userStr);
             this.token = token;
             this.user = user;
-            // Fetch latest wallet balance when loading from storage
-            this.fetchLatestWalletBalance();
-            console.log('Loaded auth data:', { token, user });
+            
+            console.log('Dữ liệu auth sau khi load:', {
+              token: this.token,
+              user: this.user,
+              isAdmin: this.isAdmin
+            });
+
+            // Tải wallet riêng và xử lý lỗi riêng
+            try {
+              await this.fetchLatestWalletBalance();
+            } catch (walletError) {
+              console.warn('Lỗi khi tải wallet:', walletError);
+              // Không logout nếu lỗi wallet
+            }
+          } else {
+            console.log('Không tìm thấy dữ liệu auth trong storage');
           }
         } catch (error) {
-          console.error('Error loading auth data:', error);
+          console.error('Lỗi khi load dữ liệu auth:', error);
           this.logout();
         }
       }

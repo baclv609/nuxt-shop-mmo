@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { Drawer, Form, Input, InputNumber, Switch, Select, Button, Table, message } from 'ant-design-vue'
-import { slugify } from '@/utils/slugify' // định nghĩa slugify tương tự như trong danh mục
+// import { slugify } from '@/utils/slugify' // định nghĩa slugify tương tự như trong danh mục
 const drawerVisible = ref(false)
 const isEditing = ref(false)
 const formRef = ref()

@@ -72,14 +72,14 @@ import {
 } from "@ant-design/icons-vue";
 
 const collapsed = ref(false);
-const selectedKeys = ref(["home"]);
+const selectedKeys = ref(["dashboard"]);
 
 const menuItems = ref([
   {
-    key: "home",
+    key: "dashboard",
     icon: UserOutlined,
-    label: "Trang chủ",
-    to: "/", // Đường dẫn cho mục Trang chủ
+    label: "Dashboard",
+    to: "/",
   },
   {
     key: "user",
@@ -90,27 +90,27 @@ const menuItems = ref([
   {
     key: "category",
     icon: UserOutlined,
-    label: "Danh mục sản phẩm",
-    to: "/category", // Danh mục sản phẩm
+    label: "Danh mục",
+    to: "/category",
   },
   {
     key: "rom",
     icon: UserOutlined,
-    label: "Quản lý ROM",
-    to: "/rom", // Đường dẫn cho mục Quản lý ROM
+    label: "Quản lý sản phẩm",
+    to: "/products",
   },
-  {
-    key: "tool",
-    icon: VideoCameraOutlined,
-    label: "Quản lý Tool",
-    to: "/tool", // Đường dẫn cho mục Quản lý Tool
-  },
-  {
-    key: "account",
-    icon: UploadOutlined,
-    label: "Quản lý Tài khoản",
-    to: "/account", // Đường dẫn cho mục Quản lý Tài khoản
-  },
+  // {
+  //   key: "tool",
+  //   icon: VideoCameraOutlined,
+  //   label: "Quản lý Tool",
+  //   to: "/rom",
+  // },
+  // {
+  //   key: "account",
+  //   icon: UploadOutlined,
+  //   label: "Quản lý Tài khoản",
+  //   to: "/account",
+  // },
 ]);
 
 const handleLogout = () => {

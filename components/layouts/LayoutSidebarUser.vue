@@ -1,4 +1,4 @@
-<template>
+D<template>
   <a-layout class="min-h-screen">
     <!-- Drawer sidebar cho mobile -->
     <a-drawer placement="left" :visible="drawerVisible" :closable="false" @close="drawerVisible = false"
@@ -47,24 +47,40 @@
             {{ walletBalance }} ₫
           </a-button>
 
-          <!-- Avatar dropdown -->
-          <a-dropdown trigger="click">
-            <a class="cursor-pointer" @click.prevent>
-              <a-avatar :size="32">
-                <UserOutlined />
-              </a-avatar>
-            </a>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item key="profile">
-                  <UserOutlined /> Thông tin
-                </a-menu-item>
-                <a-menu-item key="logout" @click="handleLogout">
-                  <UploadOutlined /> Đăng xuất
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
+<!-- User menu -->
+<template v-if="auth.loggedIn">
+  <a-dropdown trigger="click">
+    <a class="cursor-pointer" @click.prevent>
+      <a-avatar :size="32">
+        <UserOutlined />
+      </a-avatar>
+    </a>
+    <template #overlay>
+      <a-menu>
+        <a-menu-item key="profile">
+          <UserOutlined /> Thông tin
+        </a-menu-item>
+        <a-menu-item key="logout" @click="handleLogout">
+          <LogoutOutlined /> Đăng xuất
+        </a-menu-item>
+      </a-menu>
+    </template>
+  </a-dropdown>
+</template>
+<template v-else>
+  <div class="flex items-center gap-2">
+    <NuxtLink to="/login">
+      <a-button type="primary">
+        Đăng nhập
+      </a-button>
+    </NuxtLink>
+    <NuxtLink to="/register">
+      <a-button>
+        Đăng ký
+      </a-button>
+    </NuxtLink>
+  </div>
+</template>
         </div>
 
 
@@ -86,6 +102,8 @@ import { useAuthStore } from '~/stores/auth'
 import {
   UserOutlined,
   ShoppingCartOutlined,
+  LogoutOutlined,
+  ShoppingOutlined,
   AppstoreOutlined,
   SettingOutlined,
   UploadOutlined,
@@ -93,6 +111,7 @@ import {
   MenuFoldOutlined,
   WalletOutlined,
 } from "@ant-design/icons-vue";
+import { message } from "ant-design-vue";
 
 const auth = useAuthStore();
 const collapsed = ref(false);
@@ -138,7 +157,7 @@ onMounted(async () => {
 // debounce function: gọi sau 500ms
 const debouncedSearch = debounce((val) => {
   console.log("Đã tìm kiếm:", val);
-  // TODO: gọi API hoặc lọc dữ liệu ở đây
+
 }, 500);
 
 // Gọi khi input thay đổi
@@ -164,7 +183,8 @@ const handleLogout = () => {
   try {
     auth.logout();
     // Chuyển hướng về trang login sau khi đăng xuất
-    navigateTo('/login');
+    // navigateTo('/login');
+    message.success('Đăng xuất thành công!');
   } catch (error) {
     console.error('Logout error:', error);
   }

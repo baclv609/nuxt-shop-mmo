@@ -2,14 +2,19 @@
   <div class="bg-gray-50 min-h-screen">
     <!-- Main Content -->
     <main class="">
-      <div class="flex flex-col lg:flex-row gap-6">
+
+      <div v-if="pending">Đang tải...</div>
+      <div v-else-if="error">Không tìm thấy sản phẩm</div>
+
+      <div v-else-if="product" class="flex flex-col lg:flex-row gap-6">
         <!-- Left Content -->
         <div class="w-full lg:w-3/4 bg-white rounded-lg shadow-sm">
           <!-- Product Image Section -->
           <div class="p-6 border-b border-gray-100">
             <h2 class="text-xl font-medium text-center mb-6">Ảnh sản phẩm</h2>
             <div class="relative rounded-lg overflow-hidden border border-gray-200">
-              <a-image :src="product.image" :alt="product.name" :preview="false" class="w-full h-auto object-cover" />
+              <a-image :src="product.image_url" :alt="product.name" :preview="false"
+                class="w-full h-auto object-cover min-h-[300px] min-w-[300px]" />
             </div>
           </div>
 
@@ -21,7 +26,7 @@
               <div v-html="product.description"></div>
 
               <!-- Features List -->
-              <div class="mt-6">
+              <!-- <div class="mt-6">
                 <h4 class="font-medium mb-3">Tính năng chính:</h4>
                 <a-list item-layout="horizontal" :data-source="product.features">
                   <template #renderItem="{ item }">
@@ -29,20 +34,20 @@
                       <template #actions>
                         <a-tag v-if="item.tag" :color="item.tagColor">{{ item.tag }}</a-tag>
                       </template>
-                      <a-list-item-meta>
-                        <template #avatar>
+<a-list-item-meta>
+  <template #avatar>
                           <CheckCircleOutlined class="text-green-500 text-lg" />
                         </template>
-                        <template #title>{{ item.title }}</template>
-                        <template #description>{{ item.description }}</template>
-                      </a-list-item-meta>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </div>
+  <template #title>{{ item.title }}</template>
+  <template #description>{{ item.description }}</template>
+</a-list-item-meta>
+</a-list-item>
+</template>
+</a-list>
+</div> -->
 
               <!-- Requirements -->
-              <div class="mt-6">
+              <!-- <div class="mt-6">
                 <h4 class="font-medium mb-3">Yêu cầu hệ thống:</h4>
                 <a-list bordered size="small">
                   <a-list-item v-for="(req, index) in product.requirements" :key="index">
@@ -52,7 +57,7 @@
                     {{ req }}
                   </a-list-item>
                 </a-list>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -64,18 +69,24 @@
 
             <div class="space-y-4">
               <div>
-                <p class="text-gray-500 text-sm">ID sản phẩm:</p>
-                <p class="font-medium">{{ product.id }}</p>
+                <p class="text-gray-500 text-sm">ID sản phẩm: #<span class="font-medium text-black">{{ product.id
+                    }}</span></p>
               </div>
 
               <div>
                 <p class="text-gray-500 text-sm">Thời gian phát hành:</p>
-                <p class="font-medium">{{ product.releaseDate }}</p>
+                <p class="font-medium">{{ new Date(product.created_at).toLocaleDateString('vi-VN', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) }}</p>
               </div>
 
               <div>
                 <p class="text-gray-500 text-sm">Giá:</p>
-                <p class="text-xl font-bold text-red-500">{{ product.price }}</p>
+                <p class="text-xl font-bold text-red-500">{{ product.discount_price }}</p>
               </div>
 
               <a-divider />
@@ -161,48 +172,81 @@ import {
   TwitterOutlined,
   InstagramOutlined
 } from '@ant-design/icons-vue'
+import { useRoute, useHead } from '#imports'
+const config = useRuntimeConfig()
+
+
+// Initialize route first before accessing params
+const route = useRoute()
+const slug = route.params.slug
+
+
+// Fetch product data from API based on slug using IIFE
+const { data: product, pending, error } = await useAsyncData(
+  `san-pham/${slug}`,
+  () => $fetch(`${config.public.apiBaseUrl}/products/slug/${slug}`)
+)
+
+
+
+
+// onMounted(() => {
+//   // Log current slug when component mounts
+//   console.log('Current URL slug:', slug)
+// })
+
+// SEO
+useHead(() => ({
+  title: product.value?.meta_title || product.value?.name || 'Chi tiết sản phẩm',
+  meta: [
+    { name: 'description', content: product.value?.meta_description || '' },
+    { property: 'og:title', content: product.value?.meta_title || '' },
+    { property: 'og:image', content: product.value?.image_url || '' },
+  ]
+}))
+
 
 // Mô phỏng dữ liệu sản phẩm
-const product = ref({
-  id: 73,
-  name: 'ACTIVE GEM PHONE FARM',
-  image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SbyCg1l9hG9o305W5SWwpv1Mtc4ZaV.png',
-  price: '1.500.000₫',
-  releaseDate: '05:49 23/02/2025',
-  description: `
-    <p>ACTIVE GEM PHONE FARM là công cụ giúp bạn quản lý và tự động hóa các tài khoản Facebook trên nhiều thiết bị di động. Công cụ này đặc biệt hữu ích cho việc quản lý tài khoản quảng cáo, tương tác tự động và các hoạt động marketing trên Facebook.</p>
-    <p>Với giao diện trực quan và dễ sử dụng, bạn có thể dễ dàng thiết lập và quản lý các luồng công việc tự động cho nhiều tài khoản cùng lúc.</p>
-  `,
-  features: [
-    {
-      title: 'Quản lý nhiều tài khoản',
-      description: 'Quản lý hàng trăm tài khoản Facebook trên cùng một giao diện',
-      tag: 'Hot',
-      tagColor: 'red'
-    },
-    {
-      title: 'Tự động hóa tương tác',
-      description: 'Tự động like, comment, share và tương tác với nội dung theo lịch trình',
-      tag: 'Mới',
-      tagColor: 'green'
-    },
-    {
-      title: 'Bảo mật cao',
-      description: 'Hệ thống proxy và fingerprint giúp tài khoản an toàn khỏi các hạn chế',
-    },
-    {
-      title: 'Báo cáo chi tiết',
-      description: 'Theo dõi hiệu suất của từng tài khoản với báo cáo trực quan',
-    },
-  ],
-  requirements: [
-    'Windows 10/11 64-bit',
-    'RAM: tối thiểu 8GB (khuyến nghị 16GB)',
-    'Ổ cứng: 10GB dung lượng trống',
-    'Kết nối internet ổn định',
-    'Hỗ trợ kết nối với các thiết bị Android'
-  ]
-})
+// const product = ref({
+//   id: 73,
+//   name: 'ACTIVE GEM PHONE FARM',
+//   image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SbyCg1l9hG9o305W5SWwpv1Mtc4ZaV.png',
+//   price: '1.500.000₫',
+//   releaseDate: '05:49 23/02/2025',
+//   description: `
+//     <p>ACTIVE GEM PHONE FARM là công cụ giúp bạn quản lý và tự động hóa các tài khoản Facebook trên nhiều thiết bị di động. Công cụ này đặc biệt hữu ích cho việc quản lý tài khoản quảng cáo, tương tác tự động và các hoạt động marketing trên Facebook.</p>
+//     <p>Với giao diện trực quan và dễ sử dụng, bạn có thể dễ dàng thiết lập và quản lý các luồng công việc tự động cho nhiều tài khoản cùng lúc.</p>
+//   `,
+//   features: [
+//     {
+//       title: 'Quản lý nhiều tài khoản',
+//       description: 'Quản lý hàng trăm tài khoản Facebook trên cùng một giao diện',
+//       tag: 'Hot',
+//       tagColor: 'red'
+//     },
+//     {
+//       title: 'Tự động hóa tương tác',
+//       description: 'Tự động like, comment, share và tương tác với nội dung theo lịch trình',
+//       tag: 'Mới',
+//       tagColor: 'green'
+//     },
+//     {
+//       title: 'Bảo mật cao',
+//       description: 'Hệ thống proxy và fingerprint giúp tài khoản an toàn khỏi các hạn chế',
+//     },
+//     {
+//       title: 'Báo cáo chi tiết',
+//       description: 'Theo dõi hiệu suất của từng tài khoản với báo cáo trực quan',
+//     },
+//   ],
+//   requirements: [
+//     'Windows 10/11 64-bit',
+//     'RAM: tối thiểu 8GB (khuyến nghị 16GB)',
+//     'Ổ cứng: 10GB dung lượng trống',
+//     'Kết nối internet ổn định',
+//     'Hỗ trợ kết nối với các thiết bị Android'
+//   ]
+// })
 </script>
 
 <style>

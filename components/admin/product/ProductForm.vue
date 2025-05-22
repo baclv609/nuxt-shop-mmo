@@ -5,8 +5,6 @@ import { message } from "ant-design-vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 import dayjs from "dayjs";
 
-import { uploadToCloudinary } from "~/utils/uploadToCloudinary";
-
 const props = defineProps({
   visible: Boolean,
   isEditing: Boolean,
@@ -19,12 +17,13 @@ const productStore = useProductStore();
 const formRef = ref();
 const loading = ref(false);
 const fileList = ref([]);
+const selectedFile = ref(null);
 
 const formState = ref({
   name: "",
   description: "",
-  original_price: "0",
-  discount_price: "0",
+  original_price: 0,
+  discount_price: 0,
   flash_sale_price: null,
   flash_sale_start: null,
   flash_sale_end: null,
@@ -32,23 +31,124 @@ const formState = ref({
   alt_text: "",
   meta_title: "",
   meta_description: "",
-  is_free: 0,
+  is_free: false,
   hot: false,
   view_count: 0,
   category_id: undefined,
   download_link: "",
 });
 
+const initialFormState = ref(null);
+
 const rules = {
   name: [
     { required: true, message: "Vui lòng nhập tên sản phẩm" },
     { min: 3, message: "Tên sản phẩm phải có ít nhất 3 ký tự" },
   ],
-  original_price: [{ required: true, message: "Vui lòng nhập giá gốc" }],
+  description: [
+    { required: true, message: "Vui lòng nhập mô tả sản phẩm" },
+    { min: 10, message: "Mô tả phải có ít nhất 10 ký tự" },
+  ],
+  original_price: [
+    {
+      validator: (rule, value) => {
+        if (formState.value.is_free) {
+          return Promise.resolve();
+        }
+        if (!value || Number(value) <= 0) {
+          return Promise.reject('Giá gốc phải lớn hơn 0');
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
+  discount_price: [
+    {
+      validator: (rule, value) => {
+        if (formState.value.is_free) {
+          return Promise.resolve();
+        }
+        if (value && Number(value) >= Number(formState.value.original_price)) {
+          return Promise.reject('Giá khuyến mãi phải nhỏ hơn giá gốc');
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
+  flash_sale_price: [
+    {
+      validator: (rule, value) => {
+        if (formState.value.is_free) {
+          return Promise.resolve();
+        }
+        if (value) {
+          if (Number(value) >= Number(formState.value.original_price)) {
+            return Promise.reject('Giá flash sale phải nhỏ hơn giá gốc');
+          }
+          if (formState.value.discount_price && Number(value) >= Number(formState.value.discount_price)) {
+            return Promise.reject('Giá flash sale phải nhỏ hơn giá khuyến mãi');
+          }
+          if (!formState.value.flash_sale_start || !formState.value.flash_sale_end) {
+            return Promise.reject('Vui lòng thiết lập thời gian flash sale');
+          }
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
+  flash_sale_start: [
+    {
+      validator: (rule, value) => {
+        if (formState.value.flash_sale_price && !value) {
+          return Promise.reject('Vui lòng chọn thời gian bắt đầu');
+        }
+        if (value && formState.value.flash_sale_end) {
+          const start = dayjs(value);
+          const end = dayjs(formState.value.flash_sale_end);
+          if (start.isAfter(end)) {
+            return Promise.reject('Thời gian bắt đầu phải trước thời gian kết thúc');
+          }
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
+  flash_sale_end: [
+    {
+      validator: (rule, value) => {
+        if (formState.value.flash_sale_price && !value) {
+          return Promise.reject('Vui lòng chọn thời gian kết thúc');
+        }
+        if (value && formState.value.flash_sale_start) {
+          const start = dayjs(formState.value.flash_sale_start);
+          const end = dayjs(value);
+          if (end.isBefore(start)) {
+            return Promise.reject('Thời gian kết thúc phải sau thời gian bắt đầu');
+          }
+        }
+        return Promise.resolve();
+      }
+    }
+  ],
   category_id: [{ required: true, message: "Vui lòng chọn danh mục" }],
   download_link: [
     { required: true, message: "Vui lòng nhập link tải" },
     { type: "url", message: "Link tải không hợp lệ" },
+  ],
+  image_url: [
+    {
+      validator: (rule, value) => {
+        return Promise.resolve(); // Không yêu cầu tải ảnh lên
+      }
+    }
+  ],
+  meta_title: [
+    { required: true, message: "Vui lòng nhập meta title" },
+    { max: 60, message: "Meta title không được vượt quá 60 ký tự" },
+  ],
+  meta_description: [
+    { required: true, message: "Vui lòng nhập meta description" },
+    { max: 160, message: "Meta description không được vượt quá 160 ký tự" },
   ],
 };
 
@@ -58,6 +158,7 @@ watch(
     console.log("newProduct", newProduct);
     if (newProduct) {
       formState.value = { ...newProduct };
+      initialFormState.value = { ...newProduct };
       if (newProduct.image_url) {
         fileList.value = [
           {
@@ -67,6 +168,7 @@ watch(
             url: newProduct.image_url,
           },
         ];
+        selectedFile.value = null;
       }
     } else {
       resetForm();
@@ -75,12 +177,22 @@ watch(
   { deep: true }
 );
 
+watch(() => formState.value.is_free, (newValue) => {
+  if (newValue) {
+    formState.value.original_price = 0;
+    formState.value.discount_price = null;
+    formState.value.flash_sale_price = null;
+    formState.value.flash_sale_start = null;
+    formState.value.flash_sale_end = null;
+  }
+});
+
 const resetForm = () => {
   formState.value = {
     name: "",
     description: "",
-    original_price: "0",
-    discount_price: "0",
+    original_price: 0,
+    discount_price: 0,
     flash_sale_price: null,
     flash_sale_start: null,
     flash_sale_end: null,
@@ -88,18 +200,48 @@ const resetForm = () => {
     alt_text: "",
     meta_title: "",
     meta_description: "",
-    is_free: 0,
+    is_free: false,
     hot: false,
     view_count: 0,
     category_id: undefined,
     download_link: "",
   };
+  initialFormState.value = null;
   fileList.value = [];
+  selectedFile.value = null;
   formRef.value?.resetFields();
 };
+
 const formatDatetime = (isoString) => {
   return isoString ? dayjs(isoString).format('YYYY-MM-DD HH:mm:ss') : null;
 };
+
+const isFormChanged = () => {
+  if (!initialFormState.value) {
+    const defaultValues = {
+      name: "",
+      description: "",
+      original_price: 0,
+      discount_price: 0,
+      flash_sale_price: null,
+      flash_sale_start: null,
+      flash_sale_end: null,
+      image_url: "",
+      alt_text: "",
+      meta_title: "",
+      meta_description: "",
+      is_free: false,
+      hot: false,
+      view_count: 0,
+      category_id: undefined,
+      download_link: "",
+    };
+    return JSON.stringify(formState.value) !== JSON.stringify(defaultValues) || selectedFile.value !== null;
+  }
+
+  return JSON.stringify(formState.value) !== JSON.stringify(initialFormState.value) || selectedFile.value !== null;
+};
+
 const handleSubmit = async () => {
   try {
     await formRef.value.validate();
@@ -109,16 +251,16 @@ const handleSubmit = async () => {
       ...formState.value,
       is_free: Boolean(formState.value.is_free),
       hot: Boolean(formState.value.hot),
-
-      // created_at: formatDatetime(formState.value.created_at),
-      // updated_at: formatDatetime(formState.value.updated_at),
-      // flash_sale_start: formatDatetime(formState.value.flash_sale_start),
-      // flash_sale_end: formatDatetime(formState.value.flash_sale_end),
-
-      image_url: fileList.value.length > 0 ? fileList.value[0].url : "",
+      original_price: Number(formState.value.original_price),
+      discount_price: Number(formState.value.discount_price),
+      flash_sale_price: formState.value.flash_sale_price ? Number(formState.value.flash_sale_price) : null,
+      flash_sale_start: formState.value.flash_sale_start ? formatDatetime(formState.value.flash_sale_start) : null,
+      flash_sale_end: formState.value.flash_sale_end ? formatDatetime(formState.value.flash_sale_end) : null,
+      image_url: formState.value.image_url,
+      created_at: formState.value.created_at ? formatDatetime(formState.value.created_at) : null,
+      updated_at: formState.value.updated_at ? formatDatetime(formState.value.updated_at) : null,
       view_count: Number(formState.value.view_count),
       category_id: Number(formState.value.category_id),
-
     };
 
     if (props.isEditing) {
@@ -142,15 +284,24 @@ const handleSubmit = async () => {
 const handleImageChange = async (info) => {
   const file = info.file.originFileObj;
   if (!file) return;
-  console.log('Received file:', file);
+
+  if (file.size > 5 * 1024 * 1024) {
+    message.error("Kích thước file không được vượt quá 5MB");
+    return;
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    message.error("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)");
+    return;
+  }
 
   try {
     loading.value = true;
-    console.log('Starting upload for file:', file.name);
-    
-    const imageUrl = await uploadToCloudinary(file);
-    console.log('Upload successful, image URL:', imageUrl);
+    const imageUrl = await uploadImage(file);
 
+    // Cập nhật formState và fileList
+    formState.value.image_url = imageUrl;
     fileList.value = [
       {
         uid: Date.now().toString(),
@@ -160,7 +311,6 @@ const handleImageChange = async (info) => {
       },
     ];
 
-    formState.value.image_url = imageUrl;
     message.success("Tải ảnh lên thành công");
   } catch (err) {
     console.error('Upload failed:', err);
@@ -170,11 +320,45 @@ const handleImageChange = async (info) => {
     loading.value = false;
   }
 };
+
+const uploadImage = async (file) => {
+  const config = useRuntimeConfig();
+  const CLOUD_NAME = config.public.CLOUDINARY_CLOUD_NAME;
+  const UPLOAD_PRESET = config.public.CLOUDINARY_UPLOAD_PRESET;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+  const res = await fetch(uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    throw new Error("Upload failed");
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+};
+
+const handleCancel = () => {
+  if (isFormChanged()) {
+    const confirm = window.confirm('Bạn có chắc chắn muốn đóng form? Các thay đổi chưa lưu sẽ bị mất.');
+    if (!confirm) return;
+  }
+  emit("update:visible", false);
+  resetForm();
+};
+
 </script>
 
 <template>
   <a-modal :open="visible" :title="isEditing ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'" @ok="handleSubmit"
-    @cancel="$emit('update:visible', false)" :confirmLoading="loading" width="900px">
+    @cancel="handleCancel" :confirmLoading="loading" width="900px">
     <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
@@ -189,18 +373,6 @@ const handleImageChange = async (info) => {
             </a-select>
           </a-form-item>
 
-          <a-form-item label="Giá gốc" name="original_price">
-            <a-input-number v-model:value="formState.original_price" :min="0" style="width: 100%" />
-          </a-form-item>
-
-          <a-form-item label="Giá khuyến mãi" name="discount_price">
-            <a-input-number v-model:value="formState.discount_price" :min="0" style="width: 100%" />
-          </a-form-item>
-
-          <a-form-item label="Link tải" name="download_link">
-            <a-input v-model:value="formState.download_link" />
-          </a-form-item>
-
           <a-row :gutter="16">
             <a-col :span="12">
               <a-form-item label="Hot" name="hot">
@@ -213,21 +385,41 @@ const handleImageChange = async (info) => {
               </a-form-item>
             </a-col>
           </a-row>
+
+          <template v-if="!formState.is_free">
+            <a-form-item label="Giá gốc" name="original_price">
+              <a-input-number v-model:value="formState.original_price" :min="0" style="width: 100%" />
+            </a-form-item>
+
+            <a-form-item label="Giá khuyến mãi" name="discount_price">
+              <a-input-number v-model:value="formState.discount_price" :min="0" style="width: 100%" />
+            </a-form-item>
+
+            <a-form-item label="Flash Sale">
+              <a-space direction="vertical" style="width: 100%">
+                <a-input-number v-model:value="formState.flash_sale_price" placeholder="Giá flash sale"
+                  style="width: 100%" />
+                <a-form-item name="flash_sale_start" style="margin-bottom: 0">
+                  <a-date-picker v-model:value="formState.flash_sale_start" show-time placeholder="Thời gian bắt đầu"
+                    style="width: 100%" :disabled-date="(current) => current && current < dayjs().startOf('day')" />
+                </a-form-item>
+                <a-form-item name="flash_sale_end" style="margin-bottom: 0">
+                  <a-date-picker v-model:value="formState.flash_sale_end" show-time placeholder="Thời gian kết thúc"
+                    style="width: 100%" :disabled-date="(current) => current && current < dayjs().startOf('day')" />
+                </a-form-item>
+              </a-space>
+            </a-form-item>
+          </template>
+
+          <a-form-item label="Link tải" name="download_link">
+            <a-input v-model:value="formState.download_link" />
+          </a-form-item>
         </a-col>
 
         <a-col :span="12">
-          <a-form-item label="Flash Sale">
-            <a-space direction="vertical" style="width: 100%">
-              <a-input-number v-model:value="formState.flash_sale_price" placeholder="Giá flash sale"
-                style="width: 100%" />
-              <!-- <a-range-picker v-model:value="[formState.flash_sale_start, formState.flash_sale_end]" show-time
-                style="width: 100%" /> -->
-            </a-space>
-          </a-form-item>
-
           <a-form-item label="Hình ảnh" name="image_url">
-            <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1" 
-              @change="handleImageChange">
+            <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1" @change="handleImageChange"
+              :show-upload-list="true">
               <div v-if="fileList.length < 1">
                 <plus-outlined />
                 <div style="margin-top: 8px">Tải lên</div>
@@ -260,5 +452,10 @@ const handleImageChange = async (info) => {
 .ant-upload-select {
   width: 100% !important;
   height: 200px !important;
+}
+
+.ant-upload-list-picture-card .ant-upload-list-item {
+  width: 100% !important;
+  height: auto !important;
 }
 </style>

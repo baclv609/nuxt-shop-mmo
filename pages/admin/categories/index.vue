@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CategoryManager />
+    <!-- <CategoryManager /> -->
   </div>
 </template>
 

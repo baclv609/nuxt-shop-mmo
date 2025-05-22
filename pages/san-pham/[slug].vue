@@ -2,7 +2,6 @@
   <div class="bg-gray-50 min-h-screen">
     <!-- Main Content -->
     <main class="">
-
       <div v-if="pending">Đang tải...</div>
       <div v-else-if="error">Không tìm thấy sản phẩm</div>
 
@@ -13,8 +12,12 @@
           <div class="p-6 border-b border-gray-100">
             <h2 class="text-xl font-medium text-center mb-6">Ảnh sản phẩm</h2>
             <div class="relative rounded-lg overflow-hidden border border-gray-200">
-              <a-image :src="product.image_url" :alt="product.name" :preview="false"
-                class="w-full h-auto object-cover min-h-[300px] min-w-[300px]" />
+              <a-image
+                :src="product.image_url"
+                :alt="product.name"
+                :preview="false"
+                class="w-full h-auto object-cover min-h-[300px] min-w-[300px]"
+              />
             </div>
           </div>
 
@@ -69,19 +72,26 @@
 
             <div class="space-y-4">
               <div>
-                <p class="text-gray-500 text-sm">ID sản phẩm: #<span class="font-medium text-black">{{ product.id
-                    }}</span></p>
+                <p class="text-gray-500 text-sm">
+                  ID sản phẩm: #<span class="font-medium text-black">{{
+                    product.id
+                  }}</span>
+                </p>
               </div>
 
               <div>
                 <p class="text-gray-500 text-sm">Thời gian phát hành:</p>
-                <p class="font-medium">{{ new Date(product.created_at).toLocaleDateString('vi-VN', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) }}</p>
+                <p class="font-medium">
+                  {{
+                    new Date(product.created_at).toLocaleDateString("vi-VN", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  }}
+                </p>
               </div>
 
               <div>
@@ -100,16 +110,25 @@
                   Demo
                 </a-button>
 
-                <a-button type="primary" block size="large"
-                  class="flex items-center justify-center bg-green-500 hover:bg-green-600 border-green-500 hover:border-green-600">
+                <a-button
+                  type="primary"
+                  block
+                  size="large"
+                  class="flex items-center justify-center bg-green-500 hover:bg-green-600 border-green-500 hover:border-green-600"
+                  @click="isModalOpen = true"
+                >
                   <template #icon>
                     <ShoppingOutlined />
                   </template>
                   Mua
                 </a-button>
 
-                <a-button type="default" block size="large"
-                  class="flex items-center justify-center text-yellow-500 border-yellow-500 hover:text-yellow-600 hover:border-yellow-600">
+                <a-button
+                  type="default"
+                  block
+                  size="large"
+                  class="flex items-center justify-center text-yellow-500 border-yellow-500 hover:text-yellow-600 hover:border-yellow-600"
+                >
                   <template #icon>
                     <TagOutlined />
                   </template>
@@ -148,12 +167,36 @@
       </div>
     </main>
 
-
+     <a-modal
+    v-model:open="isModalOpen"
+    :footer="null"
+    centered
+    width="400"
+  >
+    <div class="flex flex-col items-center text-center">
+      <div class="w-20 h-20 flex items-center justify-center rounded-full border border-blue-300 text-3xl text-blue-400 mb-4">
+        ?
+      </div>
+      <h2 class="text-xl font-semibold mb-2">Xác nhận thanh toán</h2>
+      <p class="mb-6">
+        Bạn có chắc chắn muốn vĩnh viễn mua sản phẩm với giá
+        <span class="font-semibold text-red-500">400,000VNĐ</span> không?
+      </p>
+      <div class="flex gap-4">
+        <a-button type="primary" class="bg-blue-500 hover:bg-blue-600" @click="handleConfirm">
+          Có, thanh toán ngay
+        </a-button>
+        <a-button type="primary" danger @click="isModalOpen = false">
+          Không
+        </a-button>
+      </div>
+    </div>
+  </a-modal>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue";
 import {
   UserOutlined,
   ShoppingCartOutlined,
@@ -170,25 +213,20 @@ import {
   PhoneOutlined,
   FacebookOutlined,
   TwitterOutlined,
-  InstagramOutlined
-} from '@ant-design/icons-vue'
-import { useRoute, useHead } from '#imports'
-const config = useRuntimeConfig()
+  InstagramOutlined,
+} from "@ant-design/icons-vue";
+import { useRoute, useHead } from "#imports";
+const config = useRuntimeConfig();
 
+const route = useRoute();
+const slug = route.params.slug;
 
-// Initialize route first before accessing params
-const route = useRoute()
-const slug = route.params.slug
-
+const isModalOpen = ref(false);
 
 // Fetch product data from API based on slug using IIFE
-const { data: product, pending, error } = await useAsyncData(
-  `san-pham/${slug}`,
-  () => $fetch(`${config.public.apiBaseUrl}/products/slug/${slug}`)
-)
-
-
-
+const { data: product, pending, error } = await useAsyncData(`san-pham/${slug}`, () =>
+  $fetch(`${config.public.apiBaseUrl}/products/slug/${slug}`)
+);
 
 // onMounted(() => {
 //   // Log current slug when component mounts
@@ -197,15 +235,18 @@ const { data: product, pending, error } = await useAsyncData(
 
 // SEO
 useHead(() => ({
-  title: product.value?.meta_title || product.value?.name || 'Chi tiết sản phẩm',
+  title: product.value?.meta_title || product.value?.name || "Chi tiết sản phẩm",
   meta: [
-    { name: 'description', content: product.value?.meta_description || '' },
-    { property: 'og:title', content: product.value?.meta_title || '' },
-    { property: 'og:image', content: product.value?.image_url || '' },
-  ]
-}))
+    { name: "description", content: product.value?.meta_description || "" },
+    { property: "og:title", content: product.value?.meta_title || "" },
+    { property: "og:image", content: product.value?.image_url || "" },
+  ],
+}));
 
-
+const handleConfirm = () => {
+  console.log("Thanh toán được xác nhận!");
+  isModalOpen.value = false;
+};
 // Mô phỏng dữ liệu sản phẩm
 // const product = ref({
 //   id: 73,

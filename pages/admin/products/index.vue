@@ -38,7 +38,7 @@ const handleModalClose = () => {
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold">Quản lý sản phẩm</h1>
-        <p class="text-gray-500 mt-1">Quản lý danh sách sản phẩm của bạn</p>
+        <!-- <p class="text-gray-500 mt-1">Quản lý danh sách sản phẩm của bạn</p> -->
       </div>
       <a-button type="primary" @click="showModal">
         <template #icon><PlusOutlined /></template>

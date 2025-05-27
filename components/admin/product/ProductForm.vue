@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useProductStore } from "~/stores/product";
 import { message } from "ant-design-vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
@@ -247,24 +247,24 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     loading.value = true;
 
-    const submitData = {
+    const { created_at, updated_at, ...submitData } = {
       ...formState.value,
       is_free: Boolean(formState.value.is_free),
       hot: Boolean(formState.value.hot),
+      alt_text: formState.value.name,
       original_price: Number(formState.value.original_price),
       discount_price: Number(formState.value.discount_price),
       flash_sale_price: formState.value.flash_sale_price ? Number(formState.value.flash_sale_price) : null,
       flash_sale_start: formState.value.flash_sale_start ? formatDatetime(formState.value.flash_sale_start) : null,
       flash_sale_end: formState.value.flash_sale_end ? formatDatetime(formState.value.flash_sale_end) : null,
       image_url: formState.value.image_url,
-      created_at: formState.value.created_at ? formatDatetime(formState.value.created_at) : null,
-      updated_at: formState.value.updated_at ? formatDatetime(formState.value.updated_at) : null,
       view_count: Number(formState.value.view_count),
       category_id: Number(formState.value.category_id),
+      updated_at: new Date()
     };
 
     if (props.isEditing) {
-      await productStore.updateProduct(props.product.id, submitData);
+      await productStore.updateProduct(props.product.id, submitData); // Gửi submitData chứa updated_at
       message.success("Cập nhật sản phẩm thành công");
     } else {
       await productStore.createProduct(submitData);
@@ -354,11 +354,44 @@ const handleCancel = () => {
   resetForm();
 };
 
+const quillOptions = {
+  theme: 'snow',
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{ 'header': 1 }, { 'header': 2 }],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'script': 'sub' }, { 'script': 'super' }],
+      [{ 'indent': '-1' }, { 'indent': '+1' }],
+      [{ 'direction': 'rtl' }],
+      [{ 'size': ['small', false, 'large', 'huge'] }],
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'font': [] }],
+      [{ 'align': [] }],
+      ['clean'],
+      ['link', 'image']
+    ]
+  }
+};
+
+// Thêm biến để lưu trữ component QuillEditor
+const QuillEditor = ref(null);
+
+// Sử dụng onMounted để import Quill chỉ ở phía client
+onMounted(async () => {
+  const { QuillEditor: Quill } = await import('@vueup/vue-quill');
+  QuillEditor.value = Quill;
+  // Import CSS
+  await import('@vueup/vue-quill/dist/vue-quill.snow.css');
+});
+
 </script>
 
 <template>
   <a-modal :open="visible" :title="isEditing ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'" @ok="handleSubmit"
-    @cancel="handleCancel" :confirmLoading="loading" width="900px">
+    @cancel="handleCancel" :confirmLoading="loading" width="1000px">
     <a-form ref="formRef" :model="formState" :rules="rules" layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
@@ -427,9 +460,9 @@ const handleCancel = () => {
             </a-upload>
           </a-form-item>
 
-          <a-form-item label="Alt text" name="alt_text">
+          <!-- <a-form-item label="Alt text" name="alt_text">
             <a-input v-model:value="formState.alt_text" />
-          </a-form-item>
+          </a-form-item> -->
 
           <a-form-item label="Meta title" name="meta_title">
             <a-input v-model:value="formState.meta_title" />
@@ -442,7 +475,11 @@ const handleCancel = () => {
       </a-row>
 
       <a-form-item label="Mô tả" name="description">
-        <a-textarea v-model:value="formState.description" :rows="4" />
+        <ClientOnly>
+          <QuillEditor v-if="QuillEditor" v-model:content="formState.description" :options="quillOptions"
+            contentType="html" toolbar="full" theme="snow" style="height: 200px; margin-bottom: 50px;" />
+          <div v-else>Loading editor...</div>
+        </ClientOnly>
       </a-form-item>
     </a-form>
   </a-modal>

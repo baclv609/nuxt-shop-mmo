@@ -1,18 +1,19 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
+  console.log("Auth: ", auth.user);
 
-  if (process.client && (!auth.user || !auth.token)) {
-    await auth.loadAuthFromStorage()
+  if (!auth.user || !auth.token) {
+    await auth.loadAuthFromStorage();
   }
-console.log('auth.loggedIn', auth.loggedIn);
-console.log('auth.isAdmin', auth.isAdmin);
+  console.log("auth.loggedIn", auth.loggedIn);
+  console.log("auth.isAdmin", auth.isAdmin);
 
-  console.log('Middleware:', {
+  console.log("Middleware:", {
     loggedIn: auth.loggedIn,
     isAdmin: auth.isAdmin,
-    user: auth.user
-  })
+    user: auth.user,
+  });
 
-  // if (!auth.loggedIn) return navigateTo('/login')
-  // if (!auth.isAdmin) return navigateTo('/404')
-})
+  if (!auth.loggedIn) return navigateTo("/login");
+  if (!auth.isAdmin) return navigateTo("/404");
+});

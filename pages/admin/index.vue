@@ -1,5 +1,6 @@
 <script>
 definePageMeta({ 
+  ssr: false,
   layout: "admin",
   middleware: ["admin"]
 });

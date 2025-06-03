@@ -12,12 +12,8 @@
           <div class="p-6 border-b border-gray-100">
             <h2 class="text-xl font-medium text-center mb-6">Ảnh sản phẩm</h2>
             <div class="relative rounded-lg overflow-hidden border border-gray-200">
-              <a-image
-                :src="product.image_url"
-                :alt="product.name"
-                :preview="false"
-                class="w-full h-auto object-cover min-h-[300px] min-w-[300px]"
-              />
+              <a-image :src="product.image_url" :alt="product.name" :preview="false"
+                class="w-full h-auto object-cover min-h-[300px] min-w-[300px]" />
             </div>
           </div>
 
@@ -75,7 +71,7 @@
                 <p class="text-gray-500 text-sm">
                   ID sản phẩm: #<span class="font-medium text-black">{{
                     product.id
-                  }}</span>
+                    }}</span>
                 </p>
               </div>
 
@@ -110,25 +106,17 @@
                   Demo
                 </a-button>
 
-                <a-button
-                  type="primary"
-                  block
-                  size="large"
+                <a-button type="primary" block size="large"
                   class="flex items-center justify-center bg-green-500 hover:bg-green-600 border-green-500 hover:border-green-600"
-                  @click="isModalOpen = true"
-                >
+                  @click="isModalOpen = true">
                   <template #icon>
                     <ShoppingOutlined />
                   </template>
                   Mua
                 </a-button>
 
-                <a-button
-                  type="default"
-                  block
-                  size="large"
-                  class="flex items-center justify-center text-yellow-500 border-yellow-500 hover:text-yellow-600 hover:border-yellow-600"
-                >
+                <a-button type="default" block size="large"
+                  class="flex items-center justify-center text-yellow-500 border-yellow-500 hover:text-yellow-600 hover:border-yellow-600">
                   <template #icon>
                     <TagOutlined />
                   </template>
@@ -167,71 +155,42 @@
       </div>
     </main>
 
-     <a-modal
-    v-model:open="isModalOpen"
-    :footer="null"
-    centered
-    width="400"
-  >
-    <div class="flex flex-col items-center text-center">
-      <div class="w-20 h-20 flex items-center justify-center rounded-full border border-blue-300 text-3xl text-blue-400 mb-4">
-        ?
-      </div>
-      <h2 class="text-xl font-semibold mb-2">Xác nhận thanh toán</h2>
-      <p class="mb-6">
-        Bạn có chắc chắn muốn vĩnh viễn mua sản phẩm với giá
-        <span class="font-semibold text-red-500">400,000VNĐ</span> không?
-      </p>
-      <div class="flex gap-4">
-        <a-button type="primary" class="bg-blue-500 hover:bg-blue-600" @click="handleConfirm">
-          Có, thanh toán ngay
-        </a-button>
-        <a-button type="primary" danger @click="isModalOpen = false">
-          Không
-        </a-button>
-      </div>
-    </div>
-  </a-modal>
+    <PaymentConfirmationModal :isOpen="isModalOpen" :price="product?.discount_price" :product="product"
+      @confirm="handleConfirm" @cancel="handleCancel" />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import {
-  UserOutlined,
-  ShoppingCartOutlined,
   EyeOutlined,
   ShoppingOutlined,
   TagOutlined,
-  CheckCircleOutlined,
-  InfoCircleOutlined,
-  ZoomInOutlined,
-  DownloadOutlined,
   MessageOutlined,
   SyncOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  FacebookOutlined,
-  TwitterOutlined,
-  InstagramOutlined,
 } from "@ant-design/icons-vue";
-import { useRoute, useHead } from "#imports";
+import { useRoute, useHead, useRouter } from "#imports";
+import PaymentConfirmationModal from '~/components/modal/PaymentConfirmationModal.vue';
+import { usePayment } from '~/composables/usePayment';
+import { message } from "ant-design-vue";
+
 const config = useRuntimeConfig();
-
 const route = useRoute();
+const router = useRouter();
 const slug = route.params.slug;
-
 const isModalOpen = ref(false);
+
+const { setCurrentPayment, processPurchase, loadCurrentPayment, clearCurrentPayment } = usePayment();
+
+
+onMounted(() => {
+  loadCurrentPayment();
+});
 
 // Fetch product data from API based on slug using IIFE
 const { data: product, pending, error } = await useAsyncData(`san-pham/${slug}`, () =>
   $fetch(`${config.public.apiBaseUrl}/products/slug/${slug}`)
 );
-
-// onMounted(() => {
-//   // Log current slug when component mounts
-//   console.log('Current URL slug:', slug)
-// })
 
 // SEO
 useHead(() => ({
@@ -243,53 +202,32 @@ useHead(() => ({
   ],
 }));
 
-const handleConfirm = () => {
-  console.log("Thanh toán được xác nhận!");
+const handleConfirm = async () => {
+  try {
+    if (!product.value) return
+
+    // Lưu sản phẩm đang thanh toán
+    setCurrentPayment({
+      id: product.value.id,
+      name: product.value.name,
+      price: Number(product.value.discount_price),
+      image_url: product.value.image_url,
+    })
+
+    // Gọi API thanh toán
+    await processPurchase()
+
+    message.success('Mua hàng thành công!')
+    isModalOpen.value = false
+  } catch (err) {
+    message.error(err.message || 'Thanh toán thất bại!')
+  } finally {
+    clearCurrentPayment()
+  }
+}
+
+const handleCancel = () => {
+  clearCurrentPayment();
   isModalOpen.value = false;
 };
-// Mô phỏng dữ liệu sản phẩm
-// const product = ref({
-//   id: 73,
-//   name: 'ACTIVE GEM PHONE FARM',
-//   image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SbyCg1l9hG9o305W5SWwpv1Mtc4ZaV.png',
-//   price: '1.500.000₫',
-//   releaseDate: '05:49 23/02/2025',
-//   description: `
-//     <p>ACTIVE GEM PHONE FARM là công cụ giúp bạn quản lý và tự động hóa các tài khoản Facebook trên nhiều thiết bị di động. Công cụ này đặc biệt hữu ích cho việc quản lý tài khoản quảng cáo, tương tác tự động và các hoạt động marketing trên Facebook.</p>
-//     <p>Với giao diện trực quan và dễ sử dụng, bạn có thể dễ dàng thiết lập và quản lý các luồng công việc tự động cho nhiều tài khoản cùng lúc.</p>
-//   `,
-//   features: [
-//     {
-//       title: 'Quản lý nhiều tài khoản',
-//       description: 'Quản lý hàng trăm tài khoản Facebook trên cùng một giao diện',
-//       tag: 'Hot',
-//       tagColor: 'red'
-//     },
-//     {
-//       title: 'Tự động hóa tương tác',
-//       description: 'Tự động like, comment, share và tương tác với nội dung theo lịch trình',
-//       tag: 'Mới',
-//       tagColor: 'green'
-//     },
-//     {
-//       title: 'Bảo mật cao',
-//       description: 'Hệ thống proxy và fingerprint giúp tài khoản an toàn khỏi các hạn chế',
-//     },
-//     {
-//       title: 'Báo cáo chi tiết',
-//       description: 'Theo dõi hiệu suất của từng tài khoản với báo cáo trực quan',
-//     },
-//   ],
-//   requirements: [
-//     'Windows 10/11 64-bit',
-//     'RAM: tối thiểu 8GB (khuyến nghị 16GB)',
-//     'Ổ cứng: 10GB dung lượng trống',
-//     'Kết nối internet ổn định',
-//     'Hỗ trợ kết nối với các thiết bị Android'
-//   ]
-// })
 </script>
-
-<style>
-/* Có thể thêm CSS tùy chỉnh nếu cần */
-</style>

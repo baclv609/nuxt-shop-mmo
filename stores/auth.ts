@@ -1,152 +1,142 @@
 // ~/stores/auth.ts
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { useRuntimeConfig, useFetch } from '#app'
 
 interface Wallet {
-  id: number;
-  user_id: number;
-  balance: string;
-  created_at: string;
+  id: number
+  user_id: number
+  balance: string
+  created_at: string
 }
 
 interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-}
-
-interface AuthResponse {
-  message: string;
-  token: string;
-  user: User;
-  wallet: Wallet;
+  id: number
+  name: string
+  email: string
+  role: 'user' | 'admin'
 }
 
 interface WalletResponse {
-  message: string;
-  wallet: Wallet;
+  message: string
+  wallet: Wallet
 }
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: null as string | null,
-    user: null as User | null,
-    wallet: null as Wallet | null,
-  }),
+export const useAuthStore = defineStore('auth', () => {
+  const token = ref<string | null>(null)
+  const user = ref<User | null>(null)
+  const wallet = ref<Wallet | null>(null)
 
-  getters: {
-    loggedIn: (state) => !!state.token,
-    isAdmin: (state) => state.user?.role === 'admin',
-    isUser: (state) => state.user?.role === 'user',
-    userWallet: (state) => state.wallet,
-    walletBalance: (state) => state.wallet?.balance || '0',
-  },
+  // Getters
+  const loggedIn = computed(() => !!token.value)
+  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isUser = computed(() => user.value?.role === 'user')
+  const userWallet = computed(() => wallet.value)
+  const walletBalance = computed(() => wallet.value?.balance || '0')
 
-  actions: {
-    setAuth(token: string, user: User, wallet: Wallet) {
-      // console.log('Setting auth data:', { token, user, wallet });
-      this.token = token;
-      this.user = user;
-      this.wallet = wallet;
-      
-      if (process.client) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(this.user));
-      }
-    },
+  // Actions
+  const setAuth = (newToken: string, newUser: User, newWallet: Wallet) => {
+    token.value = newToken
+    user.value = newUser
+    wallet.value = newWallet
 
-    async loadAuthFromStorage() {
-      if (process.client) {
+    if (process.client) {
+      localStorage.setItem('token', newToken)
+      localStorage.setItem('user', JSON.stringify(newUser))
+    }
+  }
+
+  const loadAuthFromStorage = async () => {
+    try {
+      if (!process.client) return
+      const storedToken = localStorage.getItem('token')
+      const storedUser = localStorage.getItem('user')
+
+      if (storedToken && storedUser) {
+        token.value = storedToken
+        user.value = JSON.parse(storedUser)
+
         try {
-          // Lấy dữ liệu từ localStorage
-          const token = localStorage.getItem('token');
-          const userStr = localStorage.getItem('user');
-          
-          console.log('Đang tải dữ liệu từ storage:', { token, userStr });
-          
-          if (token && userStr) {
-            // Parse và set dữ liệu user
-            const user = JSON.parse(userStr);
-            this.token = token;
-            this.user = user;
-            
-            console.log('Dữ liệu auth sau khi load:', {
-              token: this.token,
-              user: this.user,
-              isAdmin: this.isAdmin
-            });
-
-            // Tải wallet riêng và xử lý lỗi riêng
-            try {
-              await this.fetchLatestWalletBalance();
-            } catch (walletError) {
-              console.warn('Lỗi khi tải wallet:', walletError);
-              // Không logout nếu lỗi wallet
-            }
-          } else {
-            console.log('Không tìm thấy dữ liệu auth trong storage');
-          }
-        } catch (error) {
-          console.error('Lỗi khi load dữ liệu auth:', error);
-          this.logout();
+          await fetchLatestWalletBalance()
+        } catch (walletError) {
+          console.warn('Lỗi khi load wallet:', walletError)
         }
       }
-    },
+    } catch (err) {
+      console.error('Lỗi khi load dữ liệu auth:', err)
+      logout()
+    }
+  }
 
-    logout() {
-      this.token = null;
-      this.user = null;
-      this.wallet = null;
+  const logout = () => {
+    token.value = null
+    user.value = null
+    wallet.value = null
+    if (process.client) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
+  }
+
+  const updateUserData = (userData: Partial<User>) => {
+    if (user.value) {
+      user.value = { ...user.value, ...userData }
       if (process.client) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-    },
-
-    updateUserData(userData: Partial<User>) {
-      if (this.user) {
-        this.user = { ...this.user, ...userData };
-        if (process.client) {
-          localStorage.setItem('user', JSON.stringify(this.user));
-        }
-      }
-    },
-
-    updateWalletBalance(balance: string) {
-      if (this.wallet) {
-        this.wallet.balance = balance;
-      }
-    },
-
-    async fetchLatestWalletBalance() {
-      if (!this.token) return null;
-
-      try {
-        const config = useRuntimeConfig();
-        const { data, error } = await useFetch<WalletResponse>(
-          `${config.public.apiBaseUrl}/wallets`,
-          {
-            headers: {
-              Authorization: `Bearer ${this.token}`
-            }
-          }
-        );
-
-        if (error.value) {
-          throw new Error(error.value.data?.message || "Lỗi khi lấy thông tin ví");
-        }
-        if (data.value) {
-          this.wallet = data.value.wallet
-          console.log('Wallet balance:', this.wallet);
-        }
-        if (data.value?.wallet) {
-          this.wallet = data.value.wallet;
-          return data.value.wallet;
-        }
-      } catch (err) {
-        console.error("Fetch wallet error:", err);
-        throw err;
+        localStorage.setItem('user', JSON.stringify(user.value))
       }
     }
-  },
-});
+  }
+
+  const updateWalletBalance = (balance: string) => {
+    if (wallet.value) {
+      wallet.value.balance = balance
+    }
+  }
+
+  const fetchLatestWalletBalance = async (): Promise<Wallet | null> => {
+    if (!token.value) return null
+
+    const config = useRuntimeConfig()
+    const { data, error } = await useFetch<WalletResponse>(
+      `${config.public.apiBaseUrl}/wallets`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.value}`
+        }
+      }
+    )
+
+    if (error.value) {
+      throw new Error(error.value.data?.message || 'Lỗi khi lấy ví')
+    }
+
+    if (data.value?.wallet) {
+      wallet.value = data.value.wallet
+      return wallet.value
+    }
+
+    return null
+  }
+
+  return {
+    // state
+    token,
+    user,
+    wallet,
+
+    // getters
+    loggedIn,
+    isAdmin,
+    isUser,
+    userWallet,
+    walletBalance,
+
+    // actions
+    setAuth,
+    loadAuthFromStorage,
+    logout,
+    updateUserData,
+    updateWalletBalance,
+    fetchLatestWalletBalance,
+  }
+})

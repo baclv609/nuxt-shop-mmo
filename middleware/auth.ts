@@ -2,7 +2,7 @@ export default defineNuxtRouteMiddleware((to) => {
   const auth = useAuthStore();
 
   // Tải dữ liệu auth nếu chưa có
-  if (!auth.user && process.client) {
+  if (!auth.user) {
     console.log('Tải dữ liệu auth');
     console.log("auth.user", auth.user);
     auth.loadAuthFromStorage();

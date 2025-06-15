@@ -2,8 +2,7 @@
 import { ref, watch, onMounted } from "vue";
 import { useProductStore } from "~/stores/product";
 import { message } from "ant-design-vue";
-import { PlusOutlined } from "@ant-design/icons-vue";
-import dayjs from "dayjs";
+import { PlusOutlined, InfoCircleOutlined } from "@ant-design/icons-vue";
 
 const props = defineProps({
   visible: Boolean,
@@ -24,9 +23,6 @@ const formState = ref({
   description: "",
   original_price: 0,
   discount_price: 0,
-  flash_sale_price: null,
-  flash_sale_start: null,
-  flash_sale_end: null,
   image_url: "",
   alt_text: "",
   meta_title: "",
@@ -34,6 +30,7 @@ const formState = ref({
   is_free: false,
   hot: false,
   view_count: 0,
+  purchase_count: 0,
   category_id: undefined,
   download_link: "",
 });
@@ -75,72 +72,10 @@ const rules = {
       }
     }
   ],
-  flash_sale_price: [
-    {
-      validator: (rule, value) => {
-        if (formState.value.is_free) {
-          return Promise.resolve();
-        }
-        if (value) {
-          if (Number(value) >= Number(formState.value.original_price)) {
-            return Promise.reject('Giá flash sale phải nhỏ hơn giá gốc');
-          }
-          if (formState.value.discount_price && Number(value) >= Number(formState.value.discount_price)) {
-            return Promise.reject('Giá flash sale phải nhỏ hơn giá khuyến mãi');
-          }
-          if (!formState.value.flash_sale_start || !formState.value.flash_sale_end) {
-            return Promise.reject('Vui lòng thiết lập thời gian flash sale');
-          }
-        }
-        return Promise.resolve();
-      }
-    }
-  ],
-  flash_sale_start: [
-    {
-      validator: (rule, value) => {
-        if (formState.value.flash_sale_price && !value) {
-          return Promise.reject('Vui lòng chọn thời gian bắt đầu');
-        }
-        if (value && formState.value.flash_sale_end) {
-          const start = dayjs(value);
-          const end = dayjs(formState.value.flash_sale_end);
-          if (start.isAfter(end)) {
-            return Promise.reject('Thời gian bắt đầu phải trước thời gian kết thúc');
-          }
-        }
-        return Promise.resolve();
-      }
-    }
-  ],
-  flash_sale_end: [
-    {
-      validator: (rule, value) => {
-        if (formState.value.flash_sale_price && !value) {
-          return Promise.reject('Vui lòng chọn thời gian kết thúc');
-        }
-        if (value && formState.value.flash_sale_start) {
-          const start = dayjs(formState.value.flash_sale_start);
-          const end = dayjs(value);
-          if (end.isBefore(start)) {
-            return Promise.reject('Thời gian kết thúc phải sau thời gian bắt đầu');
-          }
-        }
-        return Promise.resolve();
-      }
-    }
-  ],
   category_id: [{ required: true, message: "Vui lòng chọn danh mục" }],
   download_link: [
     { required: true, message: "Vui lòng nhập link tải" },
     { type: "url", message: "Link tải không hợp lệ" },
-  ],
-  image_url: [
-    {
-      validator: (rule, value) => {
-        return Promise.resolve(); // Không yêu cầu tải ảnh lên
-      }
-    }
   ],
   meta_title: [
     { required: true, message: "Vui lòng nhập meta title" },
@@ -155,7 +90,6 @@ const rules = {
 watch(
   () => props.product,
   (newProduct) => {
-    console.log("newProduct", newProduct);
     if (newProduct) {
       formState.value = { ...newProduct };
       initialFormState.value = { ...newProduct };
@@ -181,9 +115,6 @@ watch(() => formState.value.is_free, (newValue) => {
   if (newValue) {
     formState.value.original_price = 0;
     formState.value.discount_price = null;
-    formState.value.flash_sale_price = null;
-    formState.value.flash_sale_start = null;
-    formState.value.flash_sale_end = null;
   }
 });
 
@@ -193,9 +124,6 @@ const resetForm = () => {
     description: "",
     original_price: 0,
     discount_price: 0,
-    flash_sale_price: null,
-    flash_sale_start: null,
-    flash_sale_end: null,
     image_url: "",
     alt_text: "",
     meta_title: "",
@@ -203,6 +131,7 @@ const resetForm = () => {
     is_free: false,
     hot: false,
     view_count: 0,
+    purchase_count: 0,
     category_id: undefined,
     download_link: "",
   };
@@ -212,10 +141,6 @@ const resetForm = () => {
   formRef.value?.resetFields();
 };
 
-const formatDatetime = (isoString) => {
-  return isoString ? dayjs(isoString).format('YYYY-MM-DD HH:mm:ss') : null;
-};
-
 const isFormChanged = () => {
   if (!initialFormState.value) {
     const defaultValues = {
@@ -223,9 +148,6 @@ const isFormChanged = () => {
       description: "",
       original_price: 0,
       discount_price: 0,
-      flash_sale_price: null,
-      flash_sale_start: null,
-      flash_sale_end: null,
       image_url: "",
       alt_text: "",
       meta_title: "",
@@ -233,6 +155,7 @@ const isFormChanged = () => {
       is_free: false,
       hot: false,
       view_count: 0,
+      purchase_count: 0,
       category_id: undefined,
       download_link: "",
     };
@@ -254,17 +177,15 @@ const handleSubmit = async () => {
       alt_text: formState.value.name,
       original_price: Number(formState.value.original_price),
       discount_price: Number(formState.value.discount_price),
-      flash_sale_price: formState.value.flash_sale_price ? Number(formState.value.flash_sale_price) : null,
-      flash_sale_start: formState.value.flash_sale_start ? formatDatetime(formState.value.flash_sale_start) : null,
-      flash_sale_end: formState.value.flash_sale_end ? formatDatetime(formState.value.flash_sale_end) : null,
       image_url: formState.value.image_url,
       view_count: Number(formState.value.view_count),
+      purchase_count: Number(formState.value.purchase_count),
       category_id: Number(formState.value.category_id),
       updated_at: new Date()
     };
 
     if (props.isEditing) {
-      await productStore.updateProduct(props.product.id, submitData); // Gửi submitData chứa updated_at
+      await productStore.updateProduct(props.product.id, submitData);
       message.success("Cập nhật sản phẩm thành công");
     } else {
       await productStore.createProduct(submitData);
@@ -300,7 +221,6 @@ const handleImageChange = async (info) => {
     loading.value = true;
     const imageUrl = await uploadImage(file);
 
-    // Cập nhật formState và fileList
     formState.value.image_url = imageUrl;
     fileList.value = [
       {
@@ -376,18 +296,15 @@ const quillOptions = {
   }
 };
 
-// Thêm biến để lưu trữ component QuillEditor
 const QuillEditor = ref(null);
 
-// Sử dụng onMounted để import Quill chỉ ở phía client
 onMounted(async () => {
   const { QuillEditor: Quill } = await import('@vueup/vue-quill');
   QuillEditor.value = Quill;
-  // Import CSS
   await import('@vueup/vue-quill/dist/vue-quill.snow.css');
 });
-
 </script>
+
 
 <template>
   <a-modal :open="visible" :title="isEditing ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'" @ok="handleSubmit"

@@ -10,10 +10,10 @@
       <p class="text-gray-500 text-sm mb-1 line-clamp-2">{{ product.meta_description }}</p>
       <div class="text-xs text-gray-400 mb-2 flex gap-3">
         <span>{{ product.view_count }} lượt xem</span>
-        <span v-if="product.sold">{{ product.sold }} đã bán</span>
+        <span>{{ product.purchase_count }} đã bán</span>
       </div>
       <p class="text-primary text-base font-bold">
-        {{ formatPrice(product.flash_sale_price || product.discount_price || product.original_price) }}
+        {{ formatCurrency(product.discount_price) }}
       </p>
       <a-button type="primary">Mua ngay</a-button>
     </NuxtLink>
@@ -27,11 +27,8 @@ defineProps({
     required: true,
   },
 })
+const formatCurrency = useCurrency();
 
-const formatPrice = (price) => {
-  if (!price) return 'Liên hệ';
-  return parseInt(price).toLocaleString("vi-VN") + " ₫";
-}
 </script>
 
 <style scoped>

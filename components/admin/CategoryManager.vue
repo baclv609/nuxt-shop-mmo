@@ -131,12 +131,10 @@ const onSearch = (value) => {
 }
 
 
-// First, let's modify the filteredCategories computed property
 const filteredCategories = computed(() => {
   try {
     // console.log('Store categories:', categoryStore.getCategories);
     
-    // Ensure we're getting an array
     const categories = Array.isArray(categoryStore.getCategories) 
       ? categoryStore.getCategories 
       : [];

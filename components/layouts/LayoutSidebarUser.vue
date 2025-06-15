@@ -15,7 +15,7 @@ D<template>
     <a-layout style="flex-direction: column">
       <a-layout-header class="!bg-white flex items-center justify-between h-16 shadow">
         <!-- Menu toggle -->
-        <div class="flex items-center"> 
+        <div class="flex items-center">
           <!-- Desktop -->
           <menu-unfold-outlined v-if="!isMobile && collapsed" class="trigger" @click="collapsed = !collapsed" />
           <menu-fold-outlined v-if="!isMobile && !collapsed" class="trigger" @click="collapsed = !collapsed" />
@@ -23,64 +23,56 @@ D<template>
           <!-- Mobile: hamburger -->
           <menu-unfold-outlined v-if="isMobile" class="trigger" @click="drawerVisible = true" />
 
-          <a-input-search
-            v-model:value="inputSearchValue"
-            placeholder="Nhập từ khóa tìm kiếm"
-            allow-clear
-            enter-button
-            class="!ml-4 min-w-[180px]"
-            @input="onSearchInput"
-            @search="onSearch"
-          />
+          <a-input-search v-model:value="inputSearchValue" placeholder="Nhập từ khóa tìm kiếm" allow-clear enter-button
+            class="!ml-4 min-w-[180px]" @input="onSearchInput" @search="onSearch" />
 
         </div>
 
         <!-- Avatar + Tiền -->
         <div class="flex items-center gap-4 pr-6">
           <!-- Nút hiển thị số tiền - chỉ hiển thị khi đã đăng nhập và có số dư -->
-          <a-button v-if="auth.loggedIn && auth.wallet" 
-            type="default" shape="round"
+          <a-button v-if="auth.loggedIn && auth.wallet" type="default" shape="round"
             class="flex items-center gap-2 !text-green-600 !border-green-300 hover:!border-green-500 hover:!text-green-700 shadow-sm">
             <template #icon>
               <WalletOutlined />
             </template>
-            {{ walletBalance }} ₫
+            {{ formatCurrency(walletBalance) }}
           </a-button>
 
-<!-- User menu -->
-<template v-if="auth.loggedIn">
-  <a-dropdown trigger="click">
-    <a class="cursor-pointer" @click.prevent>
-      <a-avatar :size="32">
-        <UserOutlined />
-      </a-avatar>
-    </a>
-    <template #overlay>
-      <a-menu>
-        <a-menu-item key="profile">
-          <UserOutlined /> Thông tin
-        </a-menu-item>
-        <a-menu-item key="logout" @click="handleLogout">
-          <LogoutOutlined /> Đăng xuất
-        </a-menu-item>
-      </a-menu>
-    </template>
-  </a-dropdown>
-</template>
-<template v-else>
-  <div class="flex items-center gap-2">
-    <NuxtLink to="/login">
-      <a-button type="primary">
-        Đăng nhập
-      </a-button>
-    </NuxtLink>
-    <NuxtLink to="/register">
-      <a-button>
-        Đăng ký
-      </a-button>
-    </NuxtLink>
-  </div>
-</template>
+          <!-- User menu -->
+          <template v-if="auth.loggedIn">
+            <a-dropdown trigger="click">
+              <a class="cursor-pointer" @click.prevent>
+                <a-avatar :size="32">
+                  <UserOutlined />
+                </a-avatar>
+              </a>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item key="profile">
+                    <UserOutlined /> Thông tin
+                  </a-menu-item>
+                  <a-menu-item key="logout" @click="handleLogout">
+                    <LogoutOutlined /> Đăng xuất
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </template>
+          <template v-else>
+            <div class="flex items-center gap-2">
+              <NuxtLink to="/login">
+                <a-button type="primary">
+                  Đăng nhập
+                </a-button>
+              </NuxtLink>
+              <NuxtLink to="/register">
+                <a-button>
+                  Đăng ký
+                </a-button>
+              </NuxtLink>
+            </div>
+          </template>
         </div>
 
 
@@ -101,12 +93,7 @@ import { useAuthStore } from '~/stores/auth'
 
 import {
   UserOutlined,
-  ShoppingCartOutlined,
   LogoutOutlined,
-  ShoppingOutlined,
-  AppstoreOutlined,
-  SettingOutlined,
-  UploadOutlined,
   MenuUnfoldOutlined,
   MenuFoldOutlined,
   WalletOutlined,
@@ -119,7 +106,7 @@ const drawerVisible = ref(false);
 const isMobile = ref(false);
 
 const inputSearchValue = ref('');
-
+const formatCurrency = useCurrency();
 // Debug logs
 onMounted(() => {
   console.log('LayoutSidebarUser mounted - Auth state:', {
@@ -148,7 +135,7 @@ const refreshWalletBalance = async () => {
 onMounted(async () => {
   updateIsMobile();
   window.addEventListener("resize", updateIsMobile);
-  
+
   if (auth.loggedIn) {
     await refreshWalletBalance();
   }
@@ -218,5 +205,4 @@ const handleLogout = () => {
     margin: 8px 0;
   }
 }
-
 </style>

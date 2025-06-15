@@ -1,7 +1,7 @@
 <script setup>
 import UserTable from '~/components/admin/UserTable.vue';
 
-definePageMeta({ 
+definePageMeta({
   layout: "admin",
   middleware: ["admin"]
 });
@@ -10,8 +10,7 @@ definePageMeta({
 <template>
   <div class="p-4">
     <div class="flex justify-between">
-        <h1 class="text-2xl font-bold mb-4">Quản lý người dùng</h1>
-        <a-button type="primary">Tạo người dùng</a-button>
+      <h1 class="text-2xl font-bold mb-4">Danh sách user</h1>
     </div>
     <UserTable />
   </div>

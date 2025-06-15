@@ -1,6 +1,9 @@
 import { ref } from "vue";
 import { useAuthStore } from "~/stores/auth";
 import { useRuntimeConfig, useFetch } from "#app";
+import { message, notification } from "ant-design-vue";
+
+const router = useRouter();
 
 interface PaymentItem {
   id: number;
@@ -77,10 +80,10 @@ export const usePayment = () => {
     return formatPrice(authStore.walletBalance);
   };
 
- const processPurchase = async (router?: any) => {
-  if (!currentPayment.value || !authStore.token) {
-    throw new Error("Thiếu thông tin mua hàng hoặc chưa đăng nhập");
-  }
+  const processPurchase = async () => {
+    if (!currentPayment.value || !authStore.token) {
+      throw new Error("Thiếu thông tin mua hàng hoặc chưa đăng nhập");
+    }
 
     if (!hasEnoughBalance(currentPayment.value.price)) {
       throw new Error("Số dư ví không đủ");
@@ -107,12 +110,21 @@ export const usePayment = () => {
         throw new Error(error.value.data?.message || "Lỗi mua hàng");
       }
 
-      if (data.value?.total_amount) {
-        // Trừ ví thủ công phía client (nếu server không trả số dư mới)
+      if (data.value) {
         const newBalance =
           parseFloat(authStore.walletBalance) - data.value.total_amount;
         authStore.updateWalletBalance(newBalance.toFixed(2));
         clearCurrentPayment();
+
+        message.success(
+          "Mua hàng thành công! Đang chuyển đến trang đơn hàng...",
+          3
+        );
+
+        setTimeout(() => {
+          router.push("/don-hang");
+        }, 3000);
+
         return {
           success: true,
           order_id: data.value.order_id,
@@ -122,6 +134,7 @@ export const usePayment = () => {
 
       throw new Error("Giao dịch thất bại");
     } catch (err: any) {
+      message.error(err.message || "Lỗi khi xử lý mua hàng");
       throw new Error(err.message || "Lỗi khi xử lý mua hàng");
     } finally {
       isProcessing.value = false;

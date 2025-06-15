@@ -71,7 +71,7 @@
                 <p class="text-gray-500 text-sm">
                   ID sản phẩm: #<span class="font-medium text-black">{{
                     product.id
-                    }}</span>
+                  }}</span>
                 </p>
               </div>
 
@@ -92,7 +92,7 @@
 
               <div>
                 <p class="text-gray-500 text-sm">Giá:</p>
-                <p class="text-xl font-bold text-red-500">{{ product.discount_price }}</p>
+                <p class="text-xl font-bold text-red-500">{{ formatCurrency(product.discount_price) }}</p>
               </div>
 
               <a-divider />
@@ -181,7 +181,7 @@ const slug = route.params.slug;
 const isModalOpen = ref(false);
 
 const { setCurrentPayment, processPurchase, loadCurrentPayment, clearCurrentPayment } = usePayment();
-
+const formatCurrency = useCurrency();
 
 onMounted(() => {
   loadCurrentPayment();
@@ -217,7 +217,6 @@ const handleConfirm = async () => {
     // Gọi API thanh toán
     await processPurchase()
 
-    message.success('Mua hàng thành công!')
     isModalOpen.value = false
   } catch (err) {
     message.error(err.message || 'Thanh toán thất bại!')

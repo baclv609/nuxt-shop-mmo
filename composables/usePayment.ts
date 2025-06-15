@@ -77,10 +77,10 @@ export const usePayment = () => {
     return formatPrice(authStore.walletBalance);
   };
 
-  const processPurchase = async () => {
-    if (!currentPayment.value || !authStore.token) {
-      throw new Error("Thiếu thông tin mua hàng hoặc chưa đăng nhập");
-    }
+ const processPurchase = async (router?: any) => {
+  if (!currentPayment.value || !authStore.token) {
+    throw new Error("Thiếu thông tin mua hàng hoặc chưa đăng nhập");
+  }
 
     if (!hasEnoughBalance(currentPayment.value.price)) {
       throw new Error("Số dư ví không đủ");
